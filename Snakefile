@@ -122,7 +122,7 @@ rule subset_vcf:
     """
     input:
         samples_to_keep='{build}/{pop}/samples-unrelated.txt',
-        file_2_subset='reference_reference_data/{build}-all_samples/processed-chr{chr}.vcf.gz'
+        file_2_subset='reference_data/{build}-all_samples/processed-chr{chr}.vcf.gz'
     output:
         '{build}/{pop}/chr{chr}.vcf.gz',
         '{build}/{pop}/chr{chr}.vcf.gz.tbi',
