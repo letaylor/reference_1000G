@@ -1,0 +1,19 @@
+{
+    # default settings for LSF job submission
+    "__default__" :
+    {
+        "group"     : "/tlrdl/fusion", # user should change this
+        #"queue"     : "research-rh7", # optional: specify queue to submit to
+        "memory"    : 15, # all jobs default to 15 in Gb
+        #"resources" : "\"select[mem>15000] rusage[mem=15000] span[hosts=1]\"",
+        "name"      : "snkmk.{rule}.{wildcards}",
+        "output"    : "logs/cluster/{rule}/snkmk.{wildcards}.o",
+        "error"     : "logs/cluster/{rule}/snkmk.{wildcards}.e"
+    },
+
+    # settings for a specific rule
+    "vcf_add_rsid_bcftools" :
+    {
+        "memory"    : 35
+    }
+}

@@ -1,0 +1,21 @@
+{
+    # default settings for slurmm job submission
+    "__default__" :
+    {
+        #"custom_flags" : "", # other custom flags
+        #"partition": "standard", # specify partition to submit to
+        "memory"    : 15, # total memory in Gb. default to 15 in Gb
+        "tasks"     : 1,
+        "cpus"      : 1, # total memory is automatically split per cpu
+        #"export"   : "NONE", # environment variables to export
+        "name"      : "snkmk.{rule}.{wildcards}",
+        "output"    : "logs/cluster/{rule}/snkmk.{wildcards}.o",
+        "error"     : "logs/cluster/{rule}/snkmk.{wildcards}.e"
+    },
+
+    # settings for a specific rule
+    "vcf_add_rsid_bcftools" :
+    {
+        "memory"    : 35
+    }
+}

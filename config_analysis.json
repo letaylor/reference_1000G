@@ -1,0 +1,9 @@
+{
+    # Run time paramters
+    #"super_populations" : ["EUR", "AFR", "AMR", "ASN", "SAS"],
+    #"chromosome_builds" : ["hg19", "hg38"]
+
+    # Demo parameters
+    "super_populations" : ["EUR"],
+    "chromosome_builds" : ["hg19"]
+}
