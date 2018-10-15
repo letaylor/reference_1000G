@@ -15,13 +15,14 @@ rule all_general:
         expand(
             'reference_data/{build}-all_samples/unprocessed-chr{chr}-n_entries.txt',
             build=config['chromosome_builds'],
-            chr=set(list(range(1, 23)) + ['X', 'Y', 'MT'])
+	    chr=config['chromosomes']
+            #chr=set(list(range(1, 23)) + ['X', 'Y', 'MT'])
         ),
         expand(
             '{build}/{pop}/chr{chr}.bed',
             build=config['chromosome_builds'],
             pop=config['super_populations'],
-            chr=set(list(range(1, 23)) + ['X', 'Y', 'MT'])
+            chr=config['chromosomes']
         ),
         # expand(
         #     '{build}/{pop}/autosome.bed',
@@ -169,6 +170,9 @@ rule combine_vcf:
 rule vcf2plink:
     """
     Converts vcf file to plink.
+
+    WARNING: in cases where the vcf file has a half call (e.g., 0/.), 
+             the variant will be set to missing 
     """
     input:
         vcf='{build}/{pop}/{file}.vcf.gz'
@@ -183,5 +187,6 @@ rule vcf2plink:
             '--keep-allele-order '
             '--make-bed '
             '--const-fid 0 '
+	    '--vcf-half-call missing '
             '--out $OUT_DIR/$(basename {input.vcf} .vcf.gz); '
         'rm $OUT_DIR/$(basename {input.vcf} .vcf.gz).nosex; '
