@@ -15,7 +15,7 @@ rule all_general:
         expand(
             'reference_data/{build}-all_samples/unprocessed-chr{chr}-n_entries.txt',
             build=config['chromosome_builds'],
-	    chr=config['chromosomes']
+            chr=config['chromosomes']
             #chr=set(list(range(1, 23)) + ['X', 'Y', 'MT'])
         ),
         expand(
@@ -187,6 +187,6 @@ rule vcf2plink:
             '--keep-allele-order '
             '--make-bed '
             '--const-fid 0 '
-	    '--vcf-half-call missing '
+            '--vcf-half-call missing '
             '--out $OUT_DIR/$(basename {input.vcf} .vcf.gz); '
         'rm $OUT_DIR/$(basename {input.vcf} .vcf.gz).nosex; '
