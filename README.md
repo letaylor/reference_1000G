@@ -1,12 +1,16 @@
 Build 1000G reference panel
 ===========================
 
-Snakemake pipeline for building 1000G reference panel. No filtering is done apart from removing one pair of related participants.
+Snakemake pipeline for building 1000G reference panel.
 
-Possible filters to consider:
-* Remove low frequency markers (e.g., <5 counts)
-* Remove structural variants
-* Remove non-unique identifiers
+The following filters are applied:
+* Remove one pair of related participants.
+* Remove low frequency markers (<1 count).
+* Compress duplicates to one line.
+
+Possible filters commented out in Snakemake file:
+* Remove structural variants.
+* Remove non-unique identifiers.
 
 
 Overview

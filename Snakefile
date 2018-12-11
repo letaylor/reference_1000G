@@ -41,16 +41,25 @@ rule count_entries_unprocessed_vcf:
         'reference_data/{build}-all_samples/unprocessed-chr{chr}-n_entries.txt'
     shell:
         'OUT_DIR=$(dirname {input.vcf}); '
-	'gunzip -c {input.vcf} | '
-	    'grep -v \'#\' | '
-	    'wc -l > '
-	    '$OUT_DIR/$(basename {input.vcf} .vcf.gz)-n_entries.txt; '
+        'gunzip -c {input.vcf} | '
+            'grep -v \'#\' | '
+            'wc -l > '
+            '$OUT_DIR/$(basename {input.vcf} .vcf.gz)-n_entries.txt; '
 
 
 rule vcf_add_rsid_bcftools:
     """
-    Replaces existing ID with dbSNP rsid using bcftools.
-    In where the ID is missing, it sill be set to '%CHROM\_%POS\_%REF\_%FIRST_ALT'
+    Alters the ID.
+        Version 1:
+            * Replaces existing ID with dbSNP rsid using bcftools.
+            * When the ID is missing, it sill be set to
+                '%CHROM\_%POS\_%REF\_%FIRST_ALT' (+ tag says to do this)
+        Version 2:
+            * This is the default.
+            * Set all ids to %CHROM\_%POS\_%REF\_%FIRST_ALT (drop + tag)
+    To change between the two versions comment/uncomment the following lines:
+        '--set-id +\'%CHROM\_%POS\_%REF\_%FIRST_ALT\' ' # version 1
+        '--set-id \'%CHROM\_%POS\_%REF\_%FIRST_ALT\' ' # version 2
 
     Information on dbSNP can be found here:
     https://www.ncbi.nlm.nih.gov/dbvar/content/org_summary/
@@ -79,9 +88,13 @@ rule vcf_add_rsid_bcftools:
         'bcftools annotate '
             '--annotations {input.dbsnp} '
             '--columns ID '
-	    '{input.file_2_annotate} | '
+            '{input.file_2_annotate} | '
         'bcftools annotate '
-            '--set-id +\'%CHROM\_%POS\_%REF\_%FIRST_ALT\' '
+            #'--set-id +\'%CHROM\_%POS\_%REF\_%FIRST_ALT\' '
+            '--set-id \'%CHROM\_%POS\_%REF\_%FIRST_ALT\' '
+            '- | '
+        'bcftools view '
+            '--compression-level 9 '
             '--output $OUT_FILE '
             '--output-type z '
             '-; '
@@ -98,10 +111,10 @@ rule make_sample_subset:
     """
     input:
         sample_info='reference_data/sample_info.tsv',
-	related_info='reference_data/sample_info-related.tsv'
+        related_info='reference_data/sample_info-related.tsv'
     output:
         '{build}/{pop}/samples.txt',
-	'{build}/{pop}/samples-unrelated.txt'
+        '{build}/{pop}/samples-unrelated.txt'
     shell:
         'mkdir -p {wildcards.build}/{wildcards.pop}; '
         'cat {input.sample_info} | '
@@ -115,7 +128,20 @@ rule make_sample_subset:
 
 rule subset_vcf:
     """
-    Subsets vcf file to a specific sample set.
+    Runs the following steps:
+        1. Subset vcf to a specific sample set.
+        2. Remove variants with < 1 total counts.
+        3. Compress duplicates to one line.
+
+    NOTES:
+        * Step 1: allele frequencies in the INFO column, AC and AN (not AF) are
+          automatically updated to reflect the new sample subset.
+        * Step 1: one could also add and `--trim-alt-alleles` to trim alleles
+          not seen in the subset (doesn't drop alleles but sets ALT to '.').
+          This flag, however, caused an issue when processing MT.
+        * Step 3: can be changed to drop duplicate entries by commenting the
+          -m+any and uncommenting the --remove-duplicates flag. An altermative
+          to keep only biallelic SNPs is: "bcftools view -m2 -M2 -v snps"
 
     WARNING: --force-samples is used which means an error will not be raised
              if <samples_to_keep> contains a sample that is missing from
@@ -133,9 +159,20 @@ rule subset_vcf:
         'bcftools view '
             '--samples-file {input.samples_to_keep} '
             '--force-samples '
+            #'--trim-alt-alleles '
+            '{input.file_2_subset} | '
+        'bcftools view '
+            '--min-ac 1 '
+            '- | '
+        'bcftools norm '
+            '-m+any '
+            #'--remove-duplicates '
+            '- | '
+        'bcftools view '
+            '--compression-level 9 '
             '--output-file {wildcards.build}/{wildcards.pop}/chr{wildcards.chr}.vcf.gz '
             '--output-type z '
-            '{input.file_2_subset}; '
+            '-; '
         'tabix -f {wildcards.build}/{wildcards.pop}/chr{wildcards.chr}.vcf.gz; '
         'gunzip -c {wildcards.build}/{wildcards.pop}/chr{wildcards.chr}.vcf.gz | '
             'grep -v \'#\' | '
@@ -158,6 +195,9 @@ rule combine_vcf:
     shell:
         'bcftools concat '
             '--ligate '
+            '- | '
+        'bcftools view '
+            '--compression-level 9 '
             '--output {wildcards.build}/{wildcards.pop}/autosome.vcf.gz '
             '--output-type z '
             '{input}; '
@@ -171,8 +211,8 @@ rule vcf2plink:
     """
     Converts vcf file to plink.
 
-    WARNING: in cases where the vcf file has a half call (e.g., 0/.), 
-             the variant will be set to missing 
+    WARNING: in cases where the vcf file has a half call (e.g., 0/.),
+             the variant will be set to missing
     """
     input:
         vcf='{build}/{pop}/{file}.vcf.gz'
