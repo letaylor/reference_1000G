@@ -140,3 +140,19 @@ conda env create --name mk_1000G --file ${SNK_REPO}/environment.yml
 # activate the new Conda environment
 source activate mk_1000G
 ```
+
+
+Other
+-----
+
+This pipeline uses [bumpversion](https://pypi.org/project/bumpversion) for automatic [semantic versioning](https://semver.org).
+
+```bash
+# bump the appropriate increment
+bumpversion patch --verbose --dry-run
+bumpversion minor --verbose --dry-run
+bumpversion major --verbose --dry-run
+
+# commit with tags
+git push --tags
+```
